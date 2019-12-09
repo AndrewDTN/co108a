@@ -28,4 +28,19 @@ CHIP Memory {
 
     PARTS:
     // Put your code here:
+    Not(in=address[14],out=N14);
+    And(a=N14,b=load,out=Mload);
+    And(a=address[14],b=load,out=Sload);
+
+    RAM16K(in=in,load=Mload,address=address[0..13],out=rout);
+    //RAM16能決定的位址[0..13] [14]必為0 因為16384的2進位
+    Screen(in=in,load=Sload,address=address[0..12],out=sout);
+    //Screen能決定[0..12] [14]必為1[13]必為0
+    Keyboard(out=kout);
+    //Keyboard只能輸出 [14]必為1[13]必為1
+
+    //決定為RAM16或Screen/Keyboard
+    Mux16(a=rout,b=skout,sel=address[14],out=out);
+    //決定為Screen或Keyboard
+    Mux16(a=sout,b=kout,sel=address[13],out=skout);
 }

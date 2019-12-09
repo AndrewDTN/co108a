@@ -40,4 +40,37 @@ CHIP CPU {
 
     PARTS:
     // Put your code here:
+    //rename
+    Or16(a=false, b=instruction, out[15]=isC, out[12]=a, out[11]=c1, out[10]=c2, out[9]=c3,
+        out[8]=c4, out[7]=c5, out[6]=c6, out[5]=d1, out[4]=d2, out[3]=d3,
+        out[2]=j1, out[1]=j2, out[0]=j3);
+    
+    Mux16(a=instruction,b=ALUout,sel=isC,out=Ain);
+
+    Not(in=isC,out=isA);
+    And(a=isC,b=d1,out=AlutoA);//C指令 非a register->0 a register->1 A指令0
+    Or(a=isA,b=AlutoA,out=Aload);//a register->1  
+    ARegister(in=Ain,load=Aload,out=Aout,out[0..14]=addressM);//addressM=Aout[0..14]
+
+    Mux16(a=Aout,b=inM,sel=a,out=AorM);//a為out[12]
+
+    And(a=isC,b=d2,out=Dload);//非d register->0 d register->1
+    DRegister(in=ALUout,load=Dload,out=Dout);
+
+    ALU(x=Dout,y=AorM,zx=c1,nx=c2,zy=c3,ny=c4,f=c5,no=c6,out=ALUout,out=outM,zr=zr,ng=ng);//對照ALU的表
+
+    //j1跟<有關 j2跟=有關 j3跟>有關
+    //ng=0 out=else,ng=1 out<0
+    //zr=0 out=else,zr=1 out=0
+    Or(a=ng,b=zr,out=ngzr);//ngzr=0->不可能,ngzr=1->(out<0)or(out=0)->(out<=0)
+    Not(in=ngzr,out=gt);//gt->(out>0)
+    And(a=j1,b=ng,out=less);
+    And(a=j2,b=zr,out=equ);
+    And(a=j3,b=gt,out=lar);
+    Or(a=less,b=equ,out=LE);
+    Or(a=LE,b=lar,out=jump);
+    And(a=isC,b=jump,out=PCload);//確定是否為C指令
+    PC(in=Aout,load=PCload,inc=true,reset=reset,out[0..14]=pc);
+
+    And(a=isC,b=d3,out=writeM);
 }
